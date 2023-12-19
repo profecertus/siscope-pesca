@@ -56,9 +56,16 @@ public class DescargaPescaController {
         return new ResponseEntity<>("OK ", HttpStatus.OK);
     }
 
-    @GetMapping("/getGastosEmb")
-    public ResponseEntity<List<DBObject>> getGastosEmb() {
-        List<DBObject> documentos = mongoTemplate.findAll(DBObject.class, "gastos-embarcacion");
+    @GetMapping("/getGastosEmb/{embarcacion}/{semana}/{servicio}")
+    public ResponseEntity<List<DBObject>> getGastosEmb(@PathVariable Long embarcacion, @PathVariable Long semana, @PathVariable Long servicio) {
+        Query query = new Query(Criteria.where("idEmbarcacion").is(embarcacion).and("idSemana").is(semana).and("idTipoServicio").is(servicio));
+        List<DBObject> documentos = mongoTemplate.find(
+                query,
+                DBObject.class,
+                "gastos-embarcacion"
+        );
+        System.out.println(documentos);
+        //List<DBObject> documentos = mongoTemplate.findAll(DBObject.class, "gastos-embarcacion");
         return new ResponseEntity<>(documentos, HttpStatus.OK);
     }
 
