@@ -69,4 +69,10 @@ public class DescargaPescaController {
         return new ResponseEntity<>(documentos, HttpStatus.OK);
     }
 
+    @GetMapping("/getAllGastosEmb")
+    public ResponseEntity<List<DBObject>> getAllGastosEmb() {
+        List<DBObject> documentos = mongoTemplate.findAll(DBObject.class, "gastos-embarcacion");
+        return new ResponseEntity<>(documentos, HttpStatus.OK);
+    }
+
 }
