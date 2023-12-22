@@ -58,7 +58,7 @@ public class DescargaPescaController {
 
     @GetMapping("/getGastosEmb/{embarcacion}/{semana}/{servicio}")
     public ResponseEntity<List<DBObject>> getGastosEmb(@PathVariable Long embarcacion, @PathVariable Long semana, @PathVariable Long servicio) {
-        Query query = new Query(Criteria.where("idEmbarcacion").is(embarcacion).and("idSemana").is(semana).and("idTipoServicio").is(servicio));
+        Query query = new Query(Criteria.where("embarcacion.idEmbarcacion").is(embarcacion).and("semana.id").is(semana).and("idTipoServicio").is(servicio));
         List<DBObject> documentos = mongoTemplate.find(
                 query,
                 DBObject.class,
