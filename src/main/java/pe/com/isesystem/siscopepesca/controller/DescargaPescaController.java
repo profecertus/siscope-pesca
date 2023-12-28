@@ -13,6 +13,7 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
+import pe.com.isesystem.siscopepesca.configuration.RespuestaHttp;
 
 import java.util.List;
 
@@ -54,8 +55,9 @@ public class DescargaPescaController {
     }
 
     @PostMapping("/saveGastosEmb")
-    public ResponseEntity<String> saveGastosEmb(@RequestBody Object descarga){
+    public ResponseEntity<RespuestaHttp> saveGastosEmb(@RequestBody Object descarga){
         ObjectMapper objectMapper = new ObjectMapper();
+        RespuestaHttp respuestaHttp = new RespuestaHttp("OK");
         try {
             String descargaJson = objectMapper.writeValueAsString(descarga);
             JsonNode jsonNode = objectMapper.readTree(descargaJson);
@@ -75,9 +77,10 @@ public class DescargaPescaController {
                 mongoTemplate.insert(descarga, "gastos-embarcacion");
 
         } catch (JsonProcessingException e) {
-            return ResponseEntity.status(500).body("Error al convertir el objeto a JSON");
+            respuestaHttp.setValorDevuelto("Error al convertir el objeto a JSON");
+            return ResponseEntity.status(500).body(respuestaHttp);
         }
-        return new ResponseEntity<>("OK ", HttpStatus.OK);
+        return new ResponseEntity<>(respuestaHttp, HttpStatus.OK);
     }
 
     @GetMapping("/getGastosEmb/{embarcacion}/{semana}/{servicio}")
