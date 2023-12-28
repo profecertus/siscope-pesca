@@ -77,11 +77,12 @@ public class DescargaPescaController {
                 mongoTemplate.insert(descarga, "gastos-embarcacion");
 
         } catch (JsonProcessingException e) {
-            respuestaHttp.setValorDevuelto("Error al convertir el objeto a JSON");
+            respuestaHttp.setRespuesta("Error al convertir el objeto a JSON");
             return ResponseEntity.status(500).body(respuestaHttp);
         }
         return new ResponseEntity<>(respuestaHttp, HttpStatus.OK);
     }
+
 
     @GetMapping("/getGastosEmb/{embarcacion}/{semana}/{servicio}")
     public ResponseEntity<List<DBObject>> getGastosEmb(@PathVariable Long embarcacion, @PathVariable Long semana, @PathVariable Long servicio) {
