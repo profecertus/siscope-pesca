@@ -10,12 +10,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import pe.com.isesystem.siscopepesca.configuration.RespuestaHttp;
 
 import java.util.List;
+
+import static org.springframework.data.mongodb.core.query.Criteria.where;
 
 @RestController
 @RequestMapping("/descarga/v1")
@@ -24,9 +25,22 @@ public class DescargaPescaController {
     @Autowired
     private MongoTemplate mongoTemplate;
 
-    @PostMapping("/saveDescarga")
-    public ResponseEntity<String> saveDescarga(@RequestBody Object descarga){
-        mongoTemplate.save(descarga, "descarga-pesca");
+    @PostMapping("/saveDescarga/{accion}")
+    public ResponseEntity<String> saveDescarga(@PathVariable String accion, @RequestBody Object descarga) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        String descargaJson = objectMapper.writeValueAsString(descarga);
+        JsonNode jsonNode = objectMapper.readTree(descargaJson);
+        String numTicket = jsonNode.get("numTicket").toString();
+
+        Query consulta = new Query(where("numTicket").is(numTicket.replace("\"", "")));
+
+        if(accion.contains("N")){
+            mongoTemplate.save(descarga, "descarga-pesca");
+        } else if (accion.contains("M")) {
+                UpdateResult ur =  mongoTemplate.replace(consulta, descarga, "descarga-pesca");
+        }
+
         return new ResponseEntity<>("OK ", HttpStatus.OK);
     }
 
@@ -38,7 +52,7 @@ public class DescargaPescaController {
 
     @GetMapping("/getCorrelativo/{anio}")
     public ResponseEntity<DBObject> getCorrelativo(@PathVariable Long anio) {
-        Query query = new Query(Criteria.where("anio").is(anio));
+        Query query = new Query(where("anio").is(anio));
         Update update = new Update().inc("corre", 1);
         FindAndModifyOptions options = new FindAndModifyOptions();
         options.returnNew(true);
@@ -64,7 +78,7 @@ public class DescargaPescaController {
             Long idTipoServicio = Long.parseLong(jsonNode.get("idTipoServicio").toString());
             Long idEmbarcacion = Long.parseLong(jsonNode.get("embarcacion").get("idEmbarcacion").toString());
             Long idSemana = Long.parseLong(jsonNode.get("semana").get("id").toString());
-            Query query = new Query(Criteria.where("embarcacion.idEmbarcacion").
+            Query query = new Query(where("embarcacion.idEmbarcacion").
                     is(idEmbarcacion).
                     and("semana.id").
                     is(idSemana).
@@ -86,7 +100,7 @@ public class DescargaPescaController {
 
     @GetMapping("/getGastosEmb/{embarcacion}/{semana}/{servicio}")
     public ResponseEntity<List<DBObject>> getGastosEmb(@PathVariable Long embarcacion, @PathVariable Long semana, @PathVariable Long servicio) {
-        Query query = new Query(Criteria.where("embarcacion.idEmbarcacion").is(embarcacion).and("semana.id").is(semana).and("idTipoServicio").is(servicio));
+        Query query = new Query(where("embarcacion.idEmbarcacion").is(embarcacion).and("semana.id").is(semana).and("idTipoServicio").is(servicio));
         List<DBObject> documentos = mongoTemplate.find(
                 query,
                 DBObject.class,
