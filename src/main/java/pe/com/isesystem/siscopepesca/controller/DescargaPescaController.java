@@ -97,6 +97,17 @@ public class DescargaPescaController {
         return new ResponseEntity<>(respuestaHttp, HttpStatus.OK);
     }
 
+    @DeleteMapping("/eliminarGastosEmb/{embarcacion}/{semana}/{servicio}")
+    public ResponseEntity<List<DBObject>> eliminarGastosEmb(@PathVariable Long embarcacion, @PathVariable Long semana, @PathVariable Long servicio) {
+        Query query = new Query(where("embarcacion.idEmbarcacion").is(embarcacion).and("semana.id").is(semana).and("idTipoServicio").is(servicio));
+        List<DBObject> documentos = mongoTemplate.findAllAndRemove(
+                query,
+                DBObject.class,
+                "gastos-embarcacion"
+        );
+        return new ResponseEntity<>(documentos, HttpStatus.OK);
+    }
+
 
     @GetMapping("/getGastosEmb/{embarcacion}/{semana}/{servicio}")
     public ResponseEntity<List<DBObject>> getGastosEmb(@PathVariable Long embarcacion, @PathVariable Long semana, @PathVariable Long servicio) {
