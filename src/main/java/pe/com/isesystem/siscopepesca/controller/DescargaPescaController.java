@@ -25,6 +25,28 @@ public class DescargaPescaController {
     @Autowired
     private MongoTemplate mongoTemplate;
 
+    @GetMapping("/getGastos/{tipoServicio}/{embarcacion}/{semana}")
+    public ResponseEntity<List<DBObject>> getGastos(@PathVariable Long tipoServicio, @PathVariable Long embarcacion, @PathVariable Long semana) {
+        Query miQuery = new Query();
+        if(tipoServicio !=0){
+            miQuery.addCriteria(where("idTipoServicio").is(tipoServicio));
+        }
+        if(embarcacion != 0){
+            miQuery.addCriteria(where("embarcacion.idEmbarcacion").is(embarcacion));
+        }
+        if(semana != 0){
+            miQuery.addCriteria(where("semana.id").is(semana));
+        }
+
+        List<DBObject> documentos = mongoTemplate.find(
+                miQuery,
+                DBObject.class,
+                "gastos-embarcacion"
+        );
+
+        return new ResponseEntity<>(documentos, HttpStatus.OK);
+    }
+
     @PostMapping("/saveDescarga/{accion}")
     public ResponseEntity<String> saveDescarga(@PathVariable String accion, @RequestBody Object descarga) throws JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
