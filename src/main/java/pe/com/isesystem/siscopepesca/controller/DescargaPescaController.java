@@ -1,20 +1,24 @@
 package pe.com.isesystem.siscopepesca.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.DBObject;
-import com.fasterxml.jackson.databind.*;
 import com.mongodb.client.result.UpdateResult;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.data.mongodb.core.FindAndModifyOptions;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
 import pe.com.isesystem.siscopepesca.configuration.RespuestaHttp;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 
@@ -44,7 +48,36 @@ public class DescargaPescaController {
                 "gastos-embarcacion"
         );
 
-        return new ResponseEntity<>(documentos, HttpStatus.OK);
+        //Ahora debo preguntar si los datos estan llenos y si lo estan si estan pagados
+        ObjectMapper objectMapper = new ObjectMapper();
+
+
+        List docValidos = (List)documentos.stream().filter(dbObject -> {
+            List docs = (ArrayList) dbObject.get("datos");
+            List validos = (List) docs.stream().filter(o -> {
+                JsonNode jsonNode;
+                String descargaJson = null;
+                try {
+                    descargaJson = objectMapper.writeValueAsString(o);
+                    jsonNode = objectMapper.readTree(descargaJson);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+                if(jsonNode.get("pagado").toString().contains("true") || Integer.parseInt(jsonNode.get("total").toString())==0)
+                    return false;
+                return true;
+            }).collect(Collectors.toList());
+
+            dbObject.put("datos", validos);
+            if (validos.size() == 0){
+                return  false;
+            }else{
+                return  true;
+            }
+        }).collect(Collectors.toList());
+
+
+        return new ResponseEntity<>(docValidos, HttpStatus.OK);
     }
 
     @PostMapping("/saveDescarga/{accion}")
@@ -62,6 +95,16 @@ public class DescargaPescaController {
         } else if (accion.contains("M")) {
                 UpdateResult ur =  mongoTemplate.replace(consulta, descarga, "descarga-pesca");
         }
+
+        return new ResponseEntity<>("OK ", HttpStatus.OK);
+    }
+
+    @PostMapping("/marcarPagado")
+    public ResponseEntity<String> marcarPagado(@RequestBody Object objeto) throws  JsonProcessingException{
+        ObjectMapper objectMapper = new ObjectMapper();
+        String valorJson = objectMapper.writeValueAsString(objeto);
+        JsonNode jsonNode = objectMapper.readTree(valorJson);
+
 
         return new ResponseEntity<>("OK ", HttpStatus.OK);
     }
