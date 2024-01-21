@@ -5,10 +5,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mongodb.DBObject;
 import com.mongodb.client.result.UpdateResult;
+import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.http.HttpStatus;
@@ -49,34 +49,16 @@ public class DescargaPescaController {
         );
 
         //Ahora debo preguntar si los datos estan llenos y si lo estan si estan pagados
-        ObjectMapper objectMapper = new ObjectMapper();
-
-
-        List docValidos = (List)documentos.stream().filter(dbObject -> {
-            List docs = (ArrayList) dbObject.get("datos");
-            List validos = (List) docs.stream().filter(o -> {
-                JsonNode jsonNode;
-                String descargaJson = null;
-                try {
-                    descargaJson = objectMapper.writeValueAsString(o);
-                    jsonNode = objectMapper.readTree(descargaJson);
-                } catch (JsonProcessingException e) {
-                    throw new RuntimeException(e);
-                }
-                if(jsonNode.get("pagado").toString().contains("true") || Integer.parseInt(jsonNode.get("total").toString())==0)
-                    return false;
-                return true;
-            }).collect(Collectors.toList());
-
-            dbObject.put("datos", validos);
-            if (validos.size() == 0){
-                return  false;
-            }else{
-                return  true;
+        List<DBObject> docValidos = new ArrayList<>();
+        for (DBObject documento : documentos) {
+            List<Document> docs = (List<Document>) documento.get("datos");
+            List<Document> validos = docs.stream().filter(o -> !o.get("pagado").
+                    toString().contains("true") && Double.parseDouble(o.get("total").toString()) != 0).collect(Collectors.toList());
+            documento.put("datos", validos);
+            if (!validos.isEmpty()) {
+                docValidos.add(documento);
             }
-        }).collect(Collectors.toList());
-
-
+        }
         return new ResponseEntity<>(docValidos, HttpStatus.OK);
     }
 
