@@ -3,6 +3,8 @@ package pe.com.isesystem.siscopepesca.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
@@ -85,11 +87,76 @@ public class DescargaPescaController {
 
     @PostMapping("/marcarPagado")
     public ResponseEntity<String> marcarPagado(@RequestBody Object objeto) throws  JsonProcessingException{
+        int idTipoServicio = 0;
         ObjectMapper objectMapper = new ObjectMapper();
         String valorJson = objectMapper.writeValueAsString(objeto);
         JsonNode jsonNode = objectMapper.readTree(valorJson);
 
+        idTipoServicio = Integer.parseInt(jsonNode.get("tipoServicio").get("idServicio").toString() );
+        int finalIdTipoServicio = idTipoServicio;
 
+        jsonNode.get("detalleGasto").forEach(jsonNode1 -> {
+            //Busco los registros
+            Query miQuery = new Query();
+            miQuery.addCriteria(where("idTipoServicio").is( finalIdTipoServicio ));
+            miQuery.addCriteria(where("semana.id").is( Integer.parseInt( jsonNode1.get("semana").get("id").toString()) ));
+            miQuery.addCriteria(where("embarcacion.idEmbarcacion").is( Integer.parseInt( jsonNode1.get("embarcacion").get("idEmbarcacion").toString()) ));
+
+            List<DBObject> documentos = mongoTemplate.find(
+                    miQuery,
+                    DBObject.class,
+                    "gastos-embarcacion"
+            );
+
+            documentos.forEach( dbObject -> {
+                try {
+                    ObjectMapper objectMapper1 = new ObjectMapper();
+                    String valorJson1 = objectMapper1.writeValueAsString(dbObject.get("datos"));
+                    JsonNode jsonNode3 = objectMapper1.readTree(valorJson1);
+
+                    jsonNode3.forEach( jsonNode2 -> {
+                        if (jsonNode2.get("idDia").toString().contains( jsonNode1.get("idDia").toString())){
+                            ((ObjectNode) jsonNode2).put("pagado", true);
+                        }
+                    });
+
+                    List<DBObject> totalDias = new ArrayList<DBObject>();
+                    // Recorrer las claves del JsonNode y agregar al DBObject
+                    for(int i = 0; i < 7; i++){
+                        BasicDBObject dbObject5 = new BasicDBObject();
+                        jsonNode3.get(i).fields().forEachRemaining(entry -> {
+                            String key = entry.getKey();
+                            Object value = objectMapper.convertValue(entry.getValue(), Object.class);
+                            dbObject5.put(key, value);
+                        });
+                        totalDias.add(dbObject5);
+                    }
+
+                    dbObject.put("datos", totalDias);
+                }catch(Exception e){
+                    e.printStackTrace();
+                }
+
+            });
+            documentos.stream().forEach( dbObject -> {
+                Query q = new Query();
+                q.addCriteria(where("_id").is(dbObject.get("_id")));
+                mongoTemplate.replace(q,dbObject, "gastos-embarcacion");
+            } );
+
+
+        } );
+
+
+
+/*
+        Query miQuery = new Query();
+        miQuery.addCriteria(where("semana.id").is( semana.getId() ));
+
+        Update update = new Update();
+        update.set("semana.estado", semana.getEstado());
+        mongoTemplate.updateMulti(miQuery, update, "gastos-embarcacion");
+        */
         return new ResponseEntity<>("OK ", HttpStatus.OK);
     }
 
