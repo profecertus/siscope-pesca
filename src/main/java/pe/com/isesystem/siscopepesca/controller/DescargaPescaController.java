@@ -41,6 +41,7 @@ public class DescargaPescaController {
         if(semana != 0){
             miQuery.addCriteria(where("semana.id").is(semana));
         }
+        miQuery.addCriteria(where("semana.estado").is(false));
 
         List<DBObject> documentos = mongoTemplate.find(
                 miQuery,
@@ -49,6 +50,7 @@ public class DescargaPescaController {
         );
 
         //Ahora debo preguntar si los datos estan llenos y si lo estan si estan pagados
+
         List<DBObject> docValidos = new ArrayList<>();
         for (DBObject documento : documentos) {
             List<Document> docs = (List<Document>) documento.get("datos");
