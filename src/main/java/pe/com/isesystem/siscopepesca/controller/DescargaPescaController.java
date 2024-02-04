@@ -85,6 +85,23 @@ public class DescargaPescaController {
         return new ResponseEntity<>("OK ", HttpStatus.OK);
     }
 
+    @GetMapping("/buscarArribo/{idEmbarcacion}/{fechaNumero}")
+    public ResponseEntity<List<DBObject>> buscarArribo(@PathVariable int idEmbarcacion,@PathVariable int fechaNumero){
+        System.out.println(idEmbarcacion);
+        System.out.println(fechaNumero);
+        Query miQuery = new Query();
+        miQuery.addCriteria(where("embarcacion.idEmbarcacion").is( idEmbarcacion ));
+        miQuery.addCriteria(where("fechaNumero").is( fechaNumero ));
+
+        List<DBObject> documentos = mongoTemplate.find(
+                miQuery,
+                DBObject.class,
+                "descarga-pesca"
+        );
+
+        return new ResponseEntity<>(documentos, HttpStatus.OK);
+    }
+
     @PostMapping("/marcarPagado")
     public ResponseEntity<String> marcarPagado(@RequestBody Object objeto) throws  JsonProcessingException{
         int idTipoServicio = 0;
