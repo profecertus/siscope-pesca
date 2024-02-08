@@ -87,11 +87,9 @@ public class DescargaPescaController {
 
     @GetMapping("/buscarArribo/{idEmbarcacion}/{fechaNumero}")
     public ResponseEntity<List<DBObject>> buscarArribo(@PathVariable int idEmbarcacion,@PathVariable int fechaNumero){
-        System.out.println(idEmbarcacion);
-        System.out.println(fechaNumero);
         Query miQuery = new Query();
         miQuery.addCriteria(where("embarcacion.idEmbarcacion").is( idEmbarcacion ));
-        miQuery.addCriteria(where("fechaNumero").is( fechaNumero ));
+        miQuery.addCriteria(where("fecha.idDia").is( fechaNumero ));
 
         List<DBObject> documentos = mongoTemplate.find(
                 miQuery,
