@@ -8,7 +8,6 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
@@ -17,6 +16,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pe.com.isesystem.siscopepesca.configuration.RespuestaHttp;
+import org.apache.logging.log4j.*;
+import pe.com.isesystem.siscopepesca.model.GastoDescargaPesca;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,8 +29,12 @@ import static org.springframework.data.mongodb.core.query.Criteria.where;
 @RequestMapping("/descarga/v1")
 public class DescargaPescaController {
 
-    @Autowired
-    private MongoTemplate mongoTemplate;
+    private final MongoTemplate mongoTemplate;
+    private static final Logger logger = LogManager.getLogger(DescargaPescaController.class);
+
+    public DescargaPescaController(MongoTemplate mongoTemplate) {
+        this.mongoTemplate = mongoTemplate;
+    }
 
     @GetMapping("/getGastos/{tipoServicio}/{embarcacion}/{semana}")
     public ResponseEntity<List<DBObject>> getGastos(@PathVariable Long tipoServicio, @PathVariable Long embarcacion, @PathVariable Long semana) {
@@ -66,6 +71,44 @@ public class DescargaPescaController {
         return new ResponseEntity<>(docValidos, HttpStatus.OK);
     }
 
+    @GetMapping("/getGastosDescarga/{tipoServicio}/{embarcacion}/{semana}")
+    public ResponseEntity<List<GastoDescargaPesca>> getGastosDescarga(@PathVariable Long tipoServicio, @PathVariable Long embarcacion, @PathVariable Long semana) throws JsonProcessingException {
+        Query miQuery = new Query();
+        if(tipoServicio !=0){
+            //Revisar el tipo
+            miQuery.addCriteria(where("idTipoServicio").is(tipoServicio));
+        }
+        if(embarcacion != 0){
+            miQuery.addCriteria(where("embarcacion.idEmbarcacion").is(embarcacion));
+        }
+        if(semana != 0){
+            miQuery.addCriteria(where("semana.id").is(semana));
+        }
+        miQuery.addCriteria(where("semana.estado").is(false));
+
+        List<DBObject> documentos = mongoTemplate.find(
+                miQuery,
+                DBObject.class,
+                "descarga-pesca"
+        );
+
+        //Ahora debo preguntar si los datos estan llenos y si lo estan si estan pagados
+        List<GastoDescargaPesca> docValidos = new ArrayList<>();
+        ObjectMapper objectMapper = new ObjectMapper();
+        String descargaJson = objectMapper.writeValueAsString(documentos);
+        JsonNode jsonNode = objectMapper.readTree( descargaJson );
+        for(JsonNode j : jsonNode){
+            GastoDescargaPesca gdp = new GastoDescargaPesca();
+            gdp.set_id(j.get("_id"));
+            gdp.setIdMoneda( Integer.parseInt(j.get("monedaMuelle").get("idMoneda").toString()) );
+            gdp.setPrecio( Double.parseDouble(j.get("precioMuelle").toString()) );
+            gdp.setRazonSocial( j.get("muelle").get("razonSocial").toString() );
+            gdp.setIdProveedor( Integer.parseInt(j.get("muelle").get("idProveedor").toString() ) );
+            docValidos.add(gdp);
+        }
+        return new ResponseEntity<>(docValidos, HttpStatus.OK);
+    }
+
     @PostMapping("/saveDescarga/{accion}")
     public ResponseEntity<String> saveDescarga(@PathVariable String accion, @RequestBody Object descarga) throws JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -79,7 +122,7 @@ public class DescargaPescaController {
         if(accion.contains("N")){
             mongoTemplate.save(descarga, "descarga-pesca");
         } else if (accion.contains("M")) {
-                UpdateResult ur =  mongoTemplate.replace(consulta, descarga, "descarga-pesca");
+                mongoTemplate.replace(consulta, descarga, "descarga-pesca");
         }
 
         return new ResponseEntity<>("OK ", HttpStatus.OK);
@@ -102,7 +145,7 @@ public class DescargaPescaController {
 
     @PostMapping("/marcarPagado")
     public ResponseEntity<String> marcarPagado(@RequestBody Object objeto) throws  JsonProcessingException{
-        int idTipoServicio = 0;
+        int idTipoServicio;
         ObjectMapper objectMapper = new ObjectMapper();
         String valorJson = objectMapper.writeValueAsString(objeto);
         JsonNode jsonNode = objectMapper.readTree(valorJson);
@@ -135,7 +178,7 @@ public class DescargaPescaController {
                         }
                     });
 
-                    List<DBObject> totalDias = new ArrayList<DBObject>();
+                    List<DBObject> totalDias = new ArrayList<>();
                     // Recorrer las claves del JsonNode y agregar al DBObject
                     for(int i = 0; i < 7; i++){
                         BasicDBObject dbObject5 = new BasicDBObject();
@@ -149,11 +192,11 @@ public class DescargaPescaController {
 
                     dbObject.put("datos", totalDias);
                 }catch(Exception e){
-                    e.printStackTrace();
+                    logger.error(e.getMessage());
                 }
 
             });
-            documentos.stream().forEach( dbObject -> {
+            documentos.forEach(dbObject -> {
                 Query q = new Query();
                 q.addCriteria(where("_id").is(dbObject.get("_id")));
                 mongoTemplate.replace(q,dbObject, "gastos-embarcacion");
@@ -161,17 +204,6 @@ public class DescargaPescaController {
 
 
         } );
-
-
-
-/*
-        Query miQuery = new Query();
-        miQuery.addCriteria(where("semana.id").is( semana.getId() ));
-
-        Update update = new Update();
-        update.set("semana.estado", semana.getEstado());
-        mongoTemplate.updateMulti(miQuery, update, "gastos-embarcacion");
-        */
         return new ResponseEntity<>("OK ", HttpStatus.OK);
     }
 
