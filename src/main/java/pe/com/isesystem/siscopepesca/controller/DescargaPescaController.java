@@ -98,6 +98,26 @@ public class DescargaPescaController {
         String descargaJson = objectMapper.writeValueAsString(documentos);
         JsonNode jsonNode = objectMapper.readTree( descargaJson );
         for(JsonNode j : jsonNode){
+            //Proveedor de Atraque
+            GastoDescargaPesca pCertificado = new GastoDescargaPesca();
+            pCertificado.set_id(j.get("_id"));
+            pCertificado.setIdMoneda( Integer.parseInt(j.get("monedaCertificado").get("idMoneda").toString()) );
+            pCertificado.setPrecio( Float.parseFloat( j.get("precioCertificado").toString().replace("\"","")) );
+            pCertificado.setRazonSocial( "GENERICO" );
+            pCertificado.setIdProveedor( 0 );
+            pCertificado.setTipoServicioNombre("Proveedor de Atraque");
+            docValidos.add(pCertificado);
+
+            //Proveedor de Atraque
+            GastoDescargaPesca patraque = new GastoDescargaPesca();
+            patraque.set_id(j.get("_id"));
+            patraque.setIdMoneda( Integer.parseInt(j.get("monedaAtraque").get("idMoneda").toString()) );
+            patraque.setPrecio( Float.parseFloat( j.get("precioAtraque").toString().replace("\"","")) );
+            patraque.setRazonSocial( "GENERICO" );
+            patraque.setIdProveedor( 0 );
+            patraque.setTipoServicioNombre("Proveedor de Atraque");
+            docValidos.add(patraque);
+
             //Proveedor de Habilitacion
             GastoDescargaPesca phab = new GastoDescargaPesca();
             phab.set_id(j.get("_id"));
