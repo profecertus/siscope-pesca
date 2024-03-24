@@ -98,14 +98,24 @@ public class DescargaPescaController {
         String descargaJson = objectMapper.writeValueAsString(documentos);
         JsonNode jsonNode = objectMapper.readTree( descargaJson );
         for(JsonNode j : jsonNode){
+            //Proveedor de Muelle
             GastoDescargaPesca gdp = new GastoDescargaPesca();
             gdp.set_id(j.get("_id"));
-            gdp.setIdMoneda( Integer.parseInt(j.get("monedaMuelle").get("idMoneda").toString()) );
-            gdp.setPrecio( Double.parseDouble(j.get("precioMuelle").toString()) );
-            gdp.setRazonSocial( j.get("muelle").get("razonSocial").toString() );
-            gdp.setIdProveedor( Integer.parseInt(j.get("muelle").get("idProveedor").toString() ) );
+            gdp.setIdMoneda( Integer.parseInt(j.get("monedaFlete").get("idMoneda").toString()) );
+            gdp.setPrecio( Double.parseDouble(j.get("totalFlete").toString()) );
+            gdp.setRazonSocial( j.get("camara").get("idProveedor").get("razonSocial").toString() );
+            gdp.setIdProveedor( Integer.parseInt(j.get("camara").get("idProveedor").get("idProveedor").toString() ) );
             gdp.setTipoServicioNombre("Proveedor de Muelle");
             docValidos.add(gdp);
+            //Proveedor de Muelle
+            GastoDescargaPesca pflete = new GastoDescargaPesca();
+            pflete.set_id(j.get("_id"));
+            pflete.setIdMoneda( Integer.parseInt(j.get("monedaMuelle").get("idMoneda").toString()) );
+            pflete.setPrecio( Double.parseDouble(j.get("precioMuelle").toString()) );
+            pflete.setRazonSocial( j.get("muelle").get("razonSocial").toString() );
+            pflete.setIdProveedor( Integer.parseInt(j.get("muelle").get("idProveedor").toString() ) );
+            pflete.setTipoServicioNombre("Proveedor Flete");
+            docValidos.add(pflete);
         }
         return new ResponseEntity<>(docValidos, HttpStatus.OK);
     }
