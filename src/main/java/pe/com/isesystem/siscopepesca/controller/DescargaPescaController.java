@@ -98,25 +98,26 @@ public class DescargaPescaController {
         String descargaJson = objectMapper.writeValueAsString(documentos);
         JsonNode jsonNode = objectMapper.readTree( descargaJson );
         for(JsonNode j : jsonNode){
-            //Proveedor de Muelle
+            //Proveedor de Flete
             GastoDescargaPesca gdp = new GastoDescargaPesca();
             gdp.set_id(j.get("_id"));
             gdp.setIdMoneda( Integer.parseInt(j.get("monedaFlete").get("idMoneda").toString()) );
-            gdp.setPrecio( Float.parseFloat(j.get("totalFlete").toString()) );
-            gdp.setRazonSocial( j.get("camara").get("idProveedor").get("razonSocial").toString() );
+            gdp.setPrecio( Float.parseFloat( j.get("totalFlete").toString().replace("\"","")) );
+            gdp.setRazonSocial( j.get("camara").get("idProveedor").get("razonSocial").toString().replace("\"","") );
             gdp.setIdProveedor( Integer.parseInt(j.get("camara").get("idProveedor").get("idProveedor").toString() ) );
-            gdp.setTipoServicioNombre("Proveedor de Muelle");
+            gdp.setTipoServicioNombre("Proveedor de Flete");
             docValidos.add(gdp);
             //Proveedor de Muelle
             GastoDescargaPesca pflete = new GastoDescargaPesca();
             pflete.set_id(j.get("_id"));
             pflete.setIdMoneda( Integer.parseInt(j.get("monedaMuelle").get("idMoneda").toString()) );
             pflete.setPrecio( Float.parseFloat(j.get("precioMuelle").toString()) );
-            pflete.setRazonSocial( j.get("muelle").get("razonSocial").toString() );
+            pflete.setRazonSocial( j.get("muelle").get("razonSocial").toString().replace("\"","") );
             pflete.setIdProveedor( Integer.parseInt(j.get("muelle").get("idProveedor").toString() ) );
-            pflete.setTipoServicioNombre("Proveedor Flete");
+            pflete.setTipoServicioNombre("Proveedor Muelle");
             docValidos.add(pflete);
         }
+
         return new ResponseEntity<>(docValidos, HttpStatus.OK);
     }
 
