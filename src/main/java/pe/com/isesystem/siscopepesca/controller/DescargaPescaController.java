@@ -102,7 +102,7 @@ public class DescargaPescaController {
             GastoDescargaPesca gdp = new GastoDescargaPesca();
             gdp.set_id(j.get("_id"));
             gdp.setIdMoneda( Integer.parseInt(j.get("monedaFlete").get("idMoneda").toString()) );
-            gdp.setPrecio( Double.parseDouble(j.get("totalFlete").toString()) );
+            gdp.setPrecio( Float.parseFloat(j.get("totalFlete").toString()) );
             gdp.setRazonSocial( j.get("camara").get("idProveedor").get("razonSocial").toString() );
             gdp.setIdProveedor( Integer.parseInt(j.get("camara").get("idProveedor").get("idProveedor").toString() ) );
             gdp.setTipoServicioNombre("Proveedor de Muelle");
@@ -111,7 +111,7 @@ public class DescargaPescaController {
             GastoDescargaPesca pflete = new GastoDescargaPesca();
             pflete.set_id(j.get("_id"));
             pflete.setIdMoneda( Integer.parseInt(j.get("monedaMuelle").get("idMoneda").toString()) );
-            pflete.setPrecio( Double.parseDouble(j.get("precioMuelle").toString()) );
+            pflete.setPrecio( Float.parseFloat(j.get("precioMuelle").toString()) );
             pflete.setRazonSocial( j.get("muelle").get("razonSocial").toString() );
             pflete.setIdProveedor( Integer.parseInt(j.get("muelle").get("idProveedor").toString() ) );
             pflete.setTipoServicioNombre("Proveedor Flete");

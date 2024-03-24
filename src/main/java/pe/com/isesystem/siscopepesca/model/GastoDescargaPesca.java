@@ -10,7 +10,7 @@ public class GastoDescargaPesca {
     public Object _id;
     public int idMoneda;
     public int idProveedor;
-    public double precio;
+    public Float precio;
     public String razonSocial;
     public String tipoServicioNombre;
 }
