@@ -104,6 +104,7 @@ public class DescargaPescaController {
             gdp.setPrecio( Double.parseDouble(j.get("precioMuelle").toString()) );
             gdp.setRazonSocial( j.get("muelle").get("razonSocial").toString() );
             gdp.setIdProveedor( Integer.parseInt(j.get("muelle").get("idProveedor").toString() ) );
+            gdp.setTipoServicioNombre("Proveedor de Muelle");
             docValidos.add(gdp);
         }
         return new ResponseEntity<>(docValidos, HttpStatus.OK);

@@ -12,4 +12,5 @@ public class GastoDescargaPesca {
     public int idProveedor;
     public double precio;
     public String razonSocial;
+    public String tipoServicioNombre;
 }
