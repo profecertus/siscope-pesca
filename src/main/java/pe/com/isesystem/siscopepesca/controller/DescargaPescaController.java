@@ -98,14 +98,34 @@ public class DescargaPescaController {
         String descargaJson = objectMapper.writeValueAsString(documentos);
         JsonNode jsonNode = objectMapper.readTree( descargaJson );
         for(JsonNode j : jsonNode){
-            //Proveedor de Atraque
+            //Proveedor de Descarga Muelle
+            GastoDescargaPesca pDescMuelle = new GastoDescargaPesca();
+            pDescMuelle.set_id(j.get("_id"));
+            pDescMuelle.setIdMoneda( Integer.parseInt(j.get("monedaDescargaMuelle").get("idMoneda").toString()) );
+            pDescMuelle.setPrecio( Float.parseFloat( j.get("precioDescargaMuelle").toString().replace("\"","")) );
+            pDescMuelle.setRazonSocial( j.get("proveedorDescargaMuelle").get("razonSocial").toString().replace("\"","") );
+            pDescMuelle.setIdProveedor( Integer.parseInt(j.get("proveedorDescargaMuelle").get("idProveedor").toString() ) );
+            pDescMuelle.setTipoServicioNombre("Proveedor de Descarga Muelle");
+            docValidos.add(pDescMuelle);
+
+            //Proveedor de Hielo Muelle
+            GastoDescargaPesca pHielo = new GastoDescargaPesca();
+            pHielo.set_id(j.get("_id"));
+            pHielo.setIdMoneda( Integer.parseInt(j.get("monedaHielo").get("idMoneda").toString()) );
+            pHielo.setPrecio( Float.parseFloat( j.get("precioHielo").toString().replace("\"","")) );
+            pHielo.setRazonSocial( "GENERICO" );
+            pHielo.setIdProveedor( 0 );
+            pHielo.setTipoServicioNombre("Proveedor de Hielo Muelle");
+            docValidos.add(pHielo);
+
+            //Proveedor de Certificado
             GastoDescargaPesca pCertificado = new GastoDescargaPesca();
             pCertificado.set_id(j.get("_id"));
             pCertificado.setIdMoneda( Integer.parseInt(j.get("monedaCertificado").get("idMoneda").toString()) );
             pCertificado.setPrecio( Float.parseFloat( j.get("precioCertificado").toString().replace("\"","")) );
             pCertificado.setRazonSocial( "GENERICO" );
             pCertificado.setIdProveedor( 0 );
-            pCertificado.setTipoServicioNombre("Proveedor de Atraque");
+            pCertificado.setTipoServicioNombre("Proveedor de Certificado");
             docValidos.add(pCertificado);
 
             //Proveedor de Atraque
